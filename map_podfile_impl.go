@@ -26,7 +26,11 @@ func (s MapPodfile) Check() map[string][]string {
 		}
 	}
 	for _, aModule := range s {
-		for _, aDepend := range aModule.Depends {
+		depends, ok := aModule.Depends()
+		if !ok {
+			continue
+		}
+		for _, aDepend := range depends {
 			dependName := aDepend.N
 			if aExistModule, ok := s[dependName]; ok {
 				if aExistModule.UseVersion() == "" || aExistModule.UseVersion() == "*" || aDepend.Version() == "" {
@@ -47,8 +51,10 @@ func (s MapPodfile) Bytes() []byte {
 	for _, m := range s {
 		buffer.WriteString(m.Name + "," + strconv.FormatBool(m.IsCommon) + "," + strconv.FormatBool(m.IsNew) + "," + strconv.FormatBool(m.IsImplicit) + "," + strconv.FormatBool(m.IsLocal) + ",")
 		buffer.WriteString(m.Version + "," + m.UpdateToVersion + "," + m.UpgradeTag() + "," + m.NewestVersion + ",")
-		for _, aDep := range m.Depends {
-			buffer.WriteString(aDep.String() + " ")
+		if depends, ok := m.Depends(); ok {
+			for _, aDep := range depends {
+				buffer.WriteString(aDep.String() + " ")
+			}
 		}
 		buffer.WriteString("\n")
 	}
@@ -139,13 +145,30 @@ func (s *MapPodfileModule) UseVersion() string {
 
 func (s *MapPodfileModule) ReferenceNodes() []string {
 	if s.flattenDepends == nil {
-		l := len(s.Depends)
-		if l > 0 {
-			s.flattenDepends = make([]string, l, l)
-			for idx, aDepend := range s.Depends {
-				s.flattenDepends[idx] = aDepend.N
+		if depends, ok := s.Depends(); ok {
+			l := len(depends)
+			if l > 0 {
+				s.flattenDepends = make([]string, l, l)
+				for idx, aDepend := range depends {
+					s.flattenDepends[idx] = aDepend.N
+				}
 			}
 		}
 	}
 	return s.flattenDepends
+}
+
+func (s *MapPodfileModule) Depends() ([]*DependBase, bool) {
+	if s.versionDependsMap == nil {
+		return nil, false
+	}
+	res, ok := s.versionDependsMap[s.UseVersion()]
+	return res, ok
+}
+
+func (s *MapPodfileModule) SetDepends(depends []*DependBase) {
+	if s.versionDependsMap == nil {
+		s.versionDependsMap = make(map[string][]*DependBase)
+	}
+	s.versionDependsMap[s.UseVersion()] = depends
 }

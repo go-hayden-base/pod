@@ -11,8 +11,8 @@ type MapPodfileModule struct {
 	IsNew           bool
 	IsImplicit      bool
 	IsLocal         bool
-	Depends         []*DependBase
 
-	flattenDepends []string
-	hasSetDepends  bool
+	versionDependsMap map[string][]*DependBase
+	flattenDepends    []string
+	hasSetDepends     bool
 }

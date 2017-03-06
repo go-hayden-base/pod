@@ -174,7 +174,9 @@ func (s *PodfileModule) MapPodfileModule() *MapPodfileModule {
 	aModule := new(MapPodfileModule)
 	aModule.Name = s.N
 	aModule.Version = s.V
-	aModule.Depends = s.Depends
+	if s.Depends != nil {
+		aModule.SetDepends(s.Depends)
+	}
 	aModule.IsLocal = s.IsLocal()
 	return aModule
 }
