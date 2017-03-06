@@ -1,0 +1,151 @@
+package pod
+
+import (
+	"bytes"
+	"strconv"
+	"strings"
+
+	fdt "github.com/go-hayden-base/foundation"
+	ver "github.com/go-hayden-base/version"
+)
+
+// ** GraphPodfile Impl **
+func (s MapPodfile) Check() map[string][]string {
+	s.banlanceVersion()
+	recessive := make(map[string][]string)
+	setRecessiveFunc := func(moduleName, contraint string) {
+		if aDepends, ok := recessive[moduleName]; ok {
+			if !fdt.SliceContainsStr(contraint, aDepends) {
+				aDepends = append(aDepends, contraint)
+				recessive[moduleName] = aDepends
+			}
+		} else {
+			aDepends = make([]string, 1, 5)
+			aDepends[0] = contraint
+			recessive[moduleName] = aDepends
+		}
+	}
+	for _, aModule := range s {
+		for _, aDepend := range aModule.Depends {
+			dependName := aDepend.N
+			if aExistModule, ok := s[dependName]; ok {
+				if aExistModule.UseVersion() == "" || aExistModule.UseVersion() == "*" || aDepend.Version() == "" {
+					continue
+				}
+				if ver.MatchVersionConstraint(aDepend.V, aExistModule.UseVersion()) {
+					continue
+				}
+			}
+			setRecessiveFunc(aDepend.N, aDepend.V)
+		}
+	}
+	return recessive
+}
+
+func (s MapPodfile) Bytes() []byte {
+	var buffer bytes.Buffer
+	for _, m := range s {
+		buffer.WriteString(m.Name + "," + strconv.FormatBool(m.IsCommon) + "," + strconv.FormatBool(m.IsNew) + "," + strconv.FormatBool(m.IsImplicit) + "," + strconv.FormatBool(m.IsLocal) + ",")
+		buffer.WriteString(m.Version + "," + m.UpdateToVersion + "," + m.UpgradeTag() + "," + m.NewestVersion + ",")
+		for _, aDep := range m.Depends {
+			buffer.WriteString(aDep.String() + " ")
+		}
+		buffer.WriteString("\n")
+	}
+	return buffer.Bytes()
+}
+
+func (s MapPodfile) String() string {
+	return string(s.Bytes())
+}
+
+// 平衡子模块版本号(让所有跟模块相同的模块版本保持最大版本)
+func (s MapPodfile) banlanceVersion() {
+	mvMap := make(map[string]string)
+	// 发现父模块及其最大版本
+	for moduleName, aModule := range s {
+		if strings.Index(moduleName, "/") < 0 {
+			continue
+		}
+		baseName := fdt.StrSplitFirst(moduleName, "/")
+		var baseVersion string
+		if baseModule, ok := s[baseName]; ok {
+			baseVersion = baseModule.UseVersion()
+		}
+		current, ok := mvMap[baseName]
+		if ok {
+			if max, err := ver.MaxVersion("", baseVersion, current, aModule.UseVersion()); err == nil {
+				mvMap[baseName] = max
+			}
+		} else {
+			if max, err := ver.MaxVersion("", baseVersion, aModule.UseVersion()); err == nil {
+				mvMap[baseName] = max
+			} else {
+				mvMap[baseName] = aModule.UseVersion()
+			}
+		}
+		if ok {
+
+		} else {
+			mvMap[baseName] = aModule.UseVersion()
+		}
+	}
+
+	// 给所有子模块赋值最大版本
+	for moduleName, aModule := range s {
+		if strings.Index(moduleName, "/") < 0 {
+			continue
+		}
+		baseName := fdt.StrSplitFirst(moduleName, "/")
+		if version, ok := mvMap[baseName]; ok {
+			if aModule.Version != "" {
+				aModule.UpdateToVersion = version
+			} else {
+				aModule.Version = version
+			}
+		}
+	}
+}
+
+// ** GraphModule Impl **
+func (s *MapPodfileModule) UpgradeTag() string {
+	if s.UpdateToVersion == "" || s.Version == "" {
+		return "-"
+	}
+	c := ver.CompareVersion(s.Version, s.UpdateToVersion)
+	switch c {
+	case -1:
+		return "+"
+	case 1:
+		return "-"
+	default:
+		return "="
+	}
+}
+
+func (s *MapPodfileModule) UseVersion() string {
+	if len(s.UpdateToVersion) == 0 {
+		return s.Version
+	} else if len(s.NewestVersion) == 0 {
+		return s.UpdateToVersion
+	}
+	c := ver.CompareVersion(s.UpdateToVersion, s.NewestVersion)
+	if c > 0 {
+		return s.NewestVersion
+	} else {
+		return s.UpdateToVersion
+	}
+}
+
+func (s *MapPodfileModule) ReferenceNodes() []string {
+	if s.flattenDepends == nil {
+		l := len(s.Depends)
+		if l > 0 {
+			s.flattenDepends = make([]string, l, l)
+			for idx, aDepend := range s.Depends {
+				s.flattenDepends[idx] = aDepend.N
+			}
+		}
+	}
+	return s.flattenDepends
+}
