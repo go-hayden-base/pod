@@ -104,7 +104,7 @@ func (s MapPodfile) banlanceVersion() {
 		}
 		baseName := fdt.StrSplitFirst(moduleName, "/")
 		if version, ok := mvMap[baseName]; ok {
-			if aModule.Version != "" {
+			if aModule.Version != "" && aModule.Version != version {
 				aModule.UpdateToVersion = version
 			} else {
 				aModule.Version = version
