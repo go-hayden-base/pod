@@ -29,6 +29,9 @@ func (s *Podfile) FillLocalModuleDepends(threadNum int, logFunc func(success boo
 				logFunc(false, "解析Spec失败: "+specPath+" 原因: "+err.Error())
 			}
 		} else {
+			if logFunc != nil {
+				logFunc(true, "解析Spec成功: "+specPath)
+			}
 			aModule.V = aSpec.Version
 			aModule.Depends = getAllDependsFromSpec(aSpec)
 		}
