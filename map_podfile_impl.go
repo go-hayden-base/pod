@@ -65,6 +65,26 @@ func (s MapPodfile) String() string {
 	return string(s.Bytes())
 }
 
+func (s MapPodfile) EnumerateAll(f func(module, current, upgradeTo, upgradeTag, newest, dependencies string, isCommon, isNew, isImplicit, isLocal bool)) {
+	if f == nil {
+		return
+	}
+	buffer := new(bytes.Buffer)
+	for _, aModuel := range s {
+		if depends, ok := aModuel.Depends(); ok {
+			for _, aDepend := range depends {
+				buffer.WriteString("[" + aDepend.N)
+				if aDepend.V != "" {
+					buffer.WriteString(" " + aDepend.V)
+				}
+				buffer.WriteString("] ")
+			}
+		}
+		f(aModuel.Name, aModuel.Version, aModuel.UpdateToVersion, aModuel.UpgradeTag(), aModuel.NewestVersion, buffer.String(), aModuel.IsCommon, aModuel.IsNew, aModuel.IsImplicit, aModuel.IsLocal)
+		buffer.Reset()
+	}
+}
+
 // 平衡子模块版本号(让所有跟模块相同的模块版本保持最大版本)
 func (s MapPodfile) banlanceVersion() {
 	mvMap := make(map[string]string)
