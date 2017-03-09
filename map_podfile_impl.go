@@ -76,6 +76,9 @@ func (s MapPodfile) EnumerateAll(f func(module, current, upgradeTo, upgradeTag, 
 	for _, aModuel := range s {
 		if depends, ok := aModuel.Depends(); ok {
 			for _, aDepend := range depends {
+				if strings.HasPrefix(aDepend.N, aModuel.Name) {
+					continue
+				}
 				buffer.WriteString("[" + aDepend.N)
 				if aDepend.V != "" {
 					buffer.WriteString(" " + aDepend.V)
