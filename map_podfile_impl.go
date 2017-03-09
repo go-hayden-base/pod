@@ -32,6 +32,9 @@ func (s MapPodfile) Check() map[string][]string {
 		}
 		for _, aDepend := range depends {
 			dependName := aDepend.N
+			if strings.Index(dependName, "/") > -1 && strings.HasPrefix(dependName, aModule.Name) {
+				continue
+			}
 			if aExistModule, ok := s[dependName]; ok {
 				if aExistModule.UseVersion() == "" || aExistModule.UseVersion() == "*" || aDepend.Version() == "" {
 					continue
