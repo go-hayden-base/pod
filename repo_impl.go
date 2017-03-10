@@ -50,17 +50,11 @@ func (s *Pod) index(root string, repos []string, filterFunc func(p string, level
 		repo := new(PodRepo)
 		repo.Name = rn
 		repo.Root = reporoot
-		podrepos = append(podrepos, repo)
+		if err := repo.index(filterFunc); err == nil {
+			podrepos = append(podrepos, repo)
+		}
 	}
-	c := make(chan error, len(podrepos))
-	for _, repo := range podrepos {
-		go func() {
-			c <- repo.index(filterFunc)
-		}()
-	}
-	for i := 0; i < len(podrepos); i++ {
-		<-c
-	}
+
 	s.PodRepos = podrepos
 	return nil
 }
