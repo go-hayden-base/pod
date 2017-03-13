@@ -329,7 +329,7 @@ func (s *MapPodfile) versionifyRuleIfNeeds() {
 
 func (s *MapPodfile) convertConstraintIfNeeds() {
 	for _, aModule := range s.Map {
-		aModule.OriginV = s.versionify(aModule.Name, aModule.UsefulV)
+		aModule.OriginV = s.versionify(aModule.Name, aModule.OriginV)
 		if version, ok := s.searchVersionFromRule(aModule.Name); ok {
 			aModule.UsefulV = version
 			continue
