@@ -123,25 +123,24 @@ func (s *MapPodfile) singleModuleEvolution() error {
 		if _, ok := s.sameParentMap[aModule.Name]; ok {
 			continue
 		}
-		if canQueryVersion && len(aModule.constraints) > 0 {
-			needsQuery := aModule.UsefulV == TagUnknownVersion
-			if !needsQuery {
-				needsQuery = needsQuery || !ver.MatchVersionConstrains(aModule.constraints, aModule.UsefulV)
-			}
-			if needsQuery {
-				v, err := s.queryVersionFunc(aModule.Name, aModule.constraints)
-				if err != nil {
-					return err
-				}
 
-				if v == TagEmptyVersion {
-					aModule.UsefulV = TagUnknownVersion
-				} else {
-					aModule.UsefulV = v
-				}
-			}
-			aModule.constraints = nil
+		needsQuery := aModule.UsefulV == TagUnknownVersion
+		if !needsQuery {
+			needsQuery = needsQuery || !ver.MatchVersionConstrains(aModule.constraints, aModule.UsefulV)
 		}
+		if canQueryVersion && needsQuery {
+			v, err := s.queryVersionFunc(aModule.Name, aModule.constraints)
+			if err != nil {
+				return err
+			}
+
+			if v == TagEmptyVersion {
+				aModule.UsefulV = TagUnknownVersion
+			} else {
+				aModule.UsefulV = v
+			}
+		}
+		aModule.constraints = nil
 	}
 	return nil
 }
