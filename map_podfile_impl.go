@@ -42,6 +42,7 @@ func NewMapPodfileModule(aModule *PodfileModule) *MapPodfileModule {
 	aMapModule.Name = aModule.N
 	aMapModule.OriginV = aModule.V
 	if aModule.IsLocal() {
+		aMapModule.UsefulV = aModule.V
 		aMapModule.AddState(StateMapPodfileModuleLocal)
 		if len(aModule.Depends) > 0 {
 			aMapModule.setDepends(nil)
