@@ -52,24 +52,6 @@ func (s *Podfile) FillLocalModuleDepends(threadNum int, logFunc func(success boo
 	}
 }
 
-func (s *Podfile) MapPodfileWithTarget(target string) MapPodfile {
-	aMapPodfile := make(MapPodfile)
-	if target == "" {
-		for _, aTarget := range s.Targets {
-			for _, aModule := range aTarget.Modules {
-				aMapModule := aModule.MapPodfileModule()
-				aMapPodfile[aMapModule.Name] = aMapModule
-			}
-		}
-	} else if aTarget := s.TargetWithName(target); aTarget != nil {
-		for _, aModule := range aTarget.Modules {
-			aMapModule := aModule.MapPodfileModule()
-			aMapPodfile[aMapModule.Name] = aMapModule
-		}
-	}
-	return aMapPodfile
-}
-
 func (s *Podfile) HasModule(name string, inTargets []string) bool {
 	for _, aTarget := range s.Targets {
 		if inTargets != nil && !fdt.SliceContainsStr(aTarget.Name, inTargets) {
@@ -171,17 +153,6 @@ func (s *PodfileTarget) HasModule(name string) bool {
 // ** PodfileModule Impl **
 func (s *PodfileModule) IsLocal() bool {
 	return s.SpecPath != ""
-}
-
-func (s *PodfileModule) MapPodfileModule() *MapPodfileModule {
-	aModule := new(MapPodfileModule)
-	aModule.Name = s.N
-	aModule.Version = s.V
-	if s.Depends != nil {
-		aModule.SetDepends(s.Depends)
-	}
-	aModule.IsLocal = s.IsLocal()
-	return aModule
 }
 
 // ** Func Public **
