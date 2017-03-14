@@ -458,7 +458,11 @@ func (s *MapPodfileModule) DependsString() string {
 		return ""
 	}
 	var buffer bytes.Buffer
+	prefix := s.Name + "/"
 	for _, aDepend := range depends {
+		if strings.HasPrefix(aDepend.N, prefix) {
+			continue
+		}
 		buffer.WriteString("[" + aDepend.N)
 		if aDepend.V != "" {
 			buffer.WriteString(" " + aDepend.V)
