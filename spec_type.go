@@ -1,11 +1,11 @@
 package pod
 
 type Spec struct {
-	FilePath        string           `json:"-,omitempty" bson:"-,omitempty"`
-	DefaultSpecsMap map[string]*Spec `json:"-,omitempty" bson:"-,omitempty"`
-	SingleSpecsMap  map[string]*Spec `json:"-,omitempty" bson:"-,omitempty"`
-	hasHash         bool             `json:"-,omitempty" bson:"-,omitempty"`
-	ModulePath      string           `json:"-,omitempty" bson:"-,omitempty"`
+	FilePath        string           `json:"-" bson:"-"`
+	DefaultSpecsMap map[string]*Spec `json:"-" bson:"-"`
+	SingleSpecsMap  map[string]*Spec `json:"-" bson:"-"`
+	ModulePath      string           `json:"-" bson:"-"`
+	hasHash         bool             `json:"-" bson:"-"`
 
 	Name         string          `json:"name,omitempty" bson:"name,omitempty"`
 	Version      string          `json:"version,omitempty" bson:"version,omitempty"`
